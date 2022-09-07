@@ -42,7 +42,7 @@
 #include "json.hpp"  // nlohmann/json
 
 
-#if SLACKING_VERBOSE_OUTPUT
+#ifdef SLACKING_VERBOSE_OUTPUT
 # pragma message ("SLACKING_VERBOSE_OUTPUT is ON")
 #endif
 
@@ -116,9 +116,15 @@ public:
     std::string easyEscape(const std::string& text);
 
 private:
-    static size_t writeFunction(void* ptr, size_t size, size_t nmemb, std::string* data) {
-        data->append((char*) ptr, size * nmemb);
-        return size * nmemb;
+    static size_t writeFunction(void* ptr, size_t size, size_t nmemb, std::string* data) noexcept {
+        try
+        {
+            data->append((char *)ptr, size * nmemb);
+            return size * nmemb;
+        }
+        catch (const std::exception &)
+        { }
+        return 0;
     }
 
 private:
@@ -357,7 +363,7 @@ public:
     void set_proxy(const std::string& url) { session_.SetProxyUrl(url); }
 
 
-    void change_token(const std::string& token) { token_ = token; };
+    void change_token(const std::string& token) { token_ = token; }
     void set_throw_exception(bool throw_exception) { throw_exception_ = throw_exception; }
 
     void trigger_error(const std::string& msg) {
@@ -381,7 +387,7 @@ public:
             checkResponse(method, json);
         }
         else{
-          #if SLACKING_VERBOSE_OUTPUT
+          #ifdef SLACKING_VERBOSE_OUTPUT
             std::cout << "<< " << response.text << "\n";
           #endif
         }
@@ -400,7 +406,7 @@ public:
             checkResponse(method, json);
         }
         else{
-          #if SLACKING_VERBOSE_OUTPUT
+          #ifdef SLACKING_VERBOSE_OUTPUT
             std::cout << "<< " << response.text<< "\n";
           #endif
         }
@@ -439,7 +445,7 @@ private:
         session_.SetUrl(complete_url);
         session_.SetBody(data);
 
-#if SLACKING_VERBOSE_OUTPUT
+#ifdef SLACKING_VERBOSE_OUTPUT
         std::cout << ">> sending: "<< complete_url << "  " << data << '\n';
 #endif
 
@@ -449,7 +455,7 @@ private:
         ignore_unused_parameter(method);
         if (json.count("ok")) {
             if(json["ok"].dump() == "true") {
-#if SLACKING_VERBOSE_OUTPUT
+#ifdef SLACKING_VERBOSE_OUTPUT
                 std::cout << "<< " << method << " [passed]\n";
 #endif
             }
@@ -457,7 +463,7 @@ private:
                 if (json.count("error")) {
                     auto reason = json["error"].dump();
                     trigger_error(reason);
-#if SLACKING_VERBOSE_OUTPUT
+#ifdef SLACKING_VERBOSE_OUTPUT
                     std::cerr << "<< checkResponse() error details: " << json << std::endl;
 #endif
                 }
@@ -520,7 +526,7 @@ template<typename T>
 inline
 std::string join(const std::vector<T>& vec, const std::string& sep) {
     std::stringstream ss;
-    if (vec.size() == 0) { return ""; };
+    if (vec.size() == 0) { return ""; }
     ss << vec[0];
     for (size_t i = 1; i < vec.size(); i ++) { ss << sep << vec[i]; }
     return ss.str();

@@ -3457,7 +3457,13 @@ void get_arithmetic_value(const BasicJsonType& j, ArithmeticType& val)
             break;
         }
 
-        default:
+        case value_t::null:
+        case value_t::object:
+        case value_t::array:
+        case value_t::string:
+        case value_t::boolean:
+        case value_t::binary:
+        case value_t::discarded:
             JSON_THROW(type_error::create(302, "type must be number, but is " + std::string(j.type_name())));
     }
 }
@@ -3718,7 +3724,12 @@ void from_json(const BasicJsonType& j, ArithmeticType& val)
             break;
         }
 
-        default:
+        case value_t::array:
+        case value_t::object:
+        case value_t::null:
+        case value_t::string:
+        case value_t::binary:
+        case value_t::discarded:
             JSON_THROW(type_error::create(302, "type must be number, but is " + std::string(j.type_name())));
     }
 }
@@ -3913,7 +3924,14 @@ template<typename IteratorType> class iteration_proxy_value
                 return anchor.key();
 
             // use an empty key for all primitive types
-            default:
+            case value_t::null:
+            case value_t::string:
+            case value_t::boolean:
+            case value_t::number_integer:
+            case value_t::number_unsigned:
+            case value_t::number_float:
+            case value_t::binary:
+            case value_t::discarded:
                 return empty_str;
         }
     }
@@ -4690,10 +4708,8 @@ std::size_t hash(const BasicJsonType& j)
             }
             return seed;
         }
-
-        default: // LCOV_EXCL_LINE
-            JSON_ASSERT(false); // LCOV_EXCL_LINE
     }
+    JSON_ASSERT(false); // LCOV_EXCL_LINE
 }
 
 }  // namespace detail
@@ -5967,10 +5983,9 @@ class lexer_base
             case token_type::literal_or_value:
                 return "'[', '{', or a literal";
             // LCOV_EXCL_START
-            default: // catch non-enum values
-                return "unknown token";
                 // LCOV_EXCL_STOP
         }
+        return "unknown token";
     }
 };
 /*!
@@ -10450,7 +10465,13 @@ class parser
                                                         exception_message(token_type::uninitialized, "value")));
                     }
 
-                    default: // the last token was unexpected
+                    case token_type::uninitialized:
+                    case token_type::end_array:
+                    case token_type::end_object:
+                    case token_type::name_separator:
+                    case token_type::value_separator:
+                    case token_type::end_of_input:
+                    case token_type::literal_or_value:
                     {
                         return sax->parse_error(m_lexer.get_position(),
                                                 m_lexer.get_token_string(),
@@ -10869,7 +10890,14 @@ class iter_impl
                 break;
             }
 
-            default:
+            case value_t::null:
+            case value_t::string:
+            case value_t::boolean:
+            case value_t::number_integer:
+            case value_t::number_unsigned:
+            case value_t::number_float:
+            case value_t::binary:
+            case value_t::discarded:
             {
                 m_it.primitive_iterator = primitive_iterator_t();
                 break;
@@ -10962,7 +10990,13 @@ class iter_impl
                 break;
             }
 
-            default:
+            case value_t::string:
+            case value_t::boolean:
+            case value_t::number_integer:
+            case value_t::number_unsigned:
+            case value_t::number_float:
+            case value_t::binary:
+            case value_t::discarded:
             {
                 m_it.primitive_iterator.set_begin();
                 break;
@@ -10992,7 +11026,14 @@ class iter_impl
                 break;
             }
 
-            default:
+            case value_t::null:
+            case value_t::string:
+            case value_t::boolean:
+            case value_t::number_integer:
+            case value_t::number_unsigned:
+            case value_t::number_float:
+            case value_t::binary:
+            case value_t::discarded:
             {
                 m_it.primitive_iterator.set_end();
                 break;
@@ -11026,16 +11067,24 @@ class iter_impl
             case value_t::null:
                 JSON_THROW(invalid_iterator::create(214, "cannot get value"));
 
-            default:
+            case value_t::string:
+            case value_t::boolean:
+            case value_t::number_integer:
+            case value_t::number_unsigned:
+            case value_t::number_float:
+            case value_t::binary:
+            case value_t::discarded:
             {
-                if (JSON_HEDLEY_LIKELY(m_it.primitive_iterator.is_begin()))
-                {
-                    return *m_object;
-                }
-
-                JSON_THROW(invalid_iterator::create(214, "cannot get value"));
+                break;
             }
         }
+
+        if (JSON_HEDLEY_LIKELY(m_it.primitive_iterator.is_begin()))
+        {
+            return *m_object;
+        }
+
+        JSON_THROW(invalid_iterator::create(214, "cannot get value"));
     }
 
     /*!
@@ -11060,16 +11109,24 @@ class iter_impl
                 return &*m_it.array_iterator;
             }
 
-            default:
+            case value_t::null:
+            case value_t::string:
+            case value_t::boolean:
+            case value_t::number_integer:
+            case value_t::number_unsigned:
+            case value_t::number_float:
+            case value_t::binary:
+            case value_t::discarded:
             {
-                if (JSON_HEDLEY_LIKELY(m_it.primitive_iterator.is_begin()))
-                {
-                    return m_object;
-                }
-
-                JSON_THROW(invalid_iterator::create(214, "cannot get value"));
+                break;
             }
         }
+        if (JSON_HEDLEY_LIKELY(m_it.primitive_iterator.is_begin()))
+        {
+            return m_object;
+        }
+
+        JSON_THROW(invalid_iterator::create(214, "cannot get value"));
     }
 
     /*!
@@ -11105,7 +11162,14 @@ class iter_impl
                 break;
             }
 
-            default:
+            case value_t::null:
+            case value_t::string:
+            case value_t::boolean:
+            case value_t::number_integer:
+            case value_t::number_unsigned:
+            case value_t::number_float:
+            case value_t::binary:
+            case value_t::discarded:
             {
                 ++m_it.primitive_iterator;
                 break;
@@ -11180,9 +11244,17 @@ class iter_impl
             case value_t::array:
                 return (m_it.array_iterator == other.m_it.array_iterator);
 
-            default:
-                return (m_it.primitive_iterator == other.m_it.primitive_iterator);
+            case value_t::null:
+            case value_t::string:
+            case value_t::boolean:
+            case value_t::number_integer:
+            case value_t::number_unsigned:
+            case value_t::number_float:
+            case value_t::binary:
+            case value_t::discarded:
+                break;
         }
+        return (m_it.primitive_iterator == other.m_it.primitive_iterator);
     }
 
     /*!
@@ -15794,9 +15866,8 @@ class serializer
                 return;
             }
 
-            default:            // LCOV_EXCL_LINE
-                JSON_ASSERT(false);  // LCOV_EXCL_LINE
         }
+        JSON_ASSERT(false);  // LCOV_EXCL_LINE
     }
 
   private:
@@ -15992,9 +16063,6 @@ class serializer
                             state = UTF8_ACCEPT;
                             break;
                         }
-
-                        default:            // LCOV_EXCL_LINE
-                            JSON_ASSERT(false);  // LCOV_EXCL_LINE
                     }
                     break;
                 }
@@ -16055,9 +16123,6 @@ class serializer
                     }
                     break;
                 }
-
-                default:            // LCOV_EXCL_LINE
-                    JSON_ASSERT(false);  // LCOV_EXCL_LINE
             }
         }
     }
@@ -17535,7 +17600,7 @@ class basic_json
                     break;
                 }
 
-                default:
+                case value_t::discarded:
                 {
                     object = nullptr;  // silence warning, see #821
                     if (JSON_HEDLEY_UNLIKELY(t == value_t::null))
@@ -17690,7 +17755,12 @@ class basic_json
                     break;
                 }
 
-                default:
+                case value_t::null:
+                case value_t::boolean:
+                case value_t::number_integer:
+                case value_t::number_unsigned:
+                case value_t::number_float:
+                case value_t::discarded:
                 {
                     break;
                 }
@@ -18589,7 +18659,8 @@ class basic_json
                 break;
             }
 
-            default:
+            case value_t::null:
+            case value_t::discarded:
                 break;
         }
 
@@ -20569,7 +20640,8 @@ class basic_json
                 break;
             }
 
-            default:
+            case value_t::null:
+            case value_t::discarded:
                 JSON_THROW(type_error::create(307, "cannot use erase() with " + std::string(type_name())));
         }
 
@@ -21513,12 +21585,18 @@ class basic_json
                 return m_value.object->size();
             }
 
-            default:
+            case value_t::string:
+            case value_t::boolean:
+            case value_t::number_integer:
+            case value_t::number_unsigned:
+            case value_t::number_float:
+            case value_t::binary:
+            case value_t::discarded:
             {
-                // all other types have size 1
-                return 1;
+                break;
             }
         }
+        return 1;
     }
 
     /*!
@@ -21578,12 +21656,20 @@ class basic_json
                 return m_value.object->max_size();
             }
 
-            default:
+            case value_t::null:
+            case value_t::string:
+            case value_t::boolean:
+            case value_t::number_integer:
+            case value_t::number_unsigned:
+            case value_t::number_float:
+            case value_t::binary:
+            case value_t::discarded:
             {
-                // all other types have max_size() == size()
-                return size();
+                break;
             }
         }
+        // all other types have max_size() == size()
+        return size();
     }
 
     /// @}
@@ -23428,10 +23514,13 @@ class basic_json
                     return "binary";
                 case value_t::discarded:
                     return "discarded";
-                default:
+                case value_t::number_integer:
+                case value_t::number_unsigned:
+                case value_t::number_float:
                     return "number";
             }
         }
+        return "unknown";
     }
 
 
